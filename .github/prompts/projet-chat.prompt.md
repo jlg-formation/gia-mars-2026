@@ -1,5 +1,5 @@
 ---
-name: brief
+name: projet-chat
 description: Faire un site de chat
 ---
 

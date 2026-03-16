@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Démo Embeddings de Texte</title>
+    <style>
+        body { font-family: Arial, sans-serif; background: #f7f7f7; margin: 0; padding: 0; }
+        .container { max-width: 600px; margin: 40px auto; background: #fff; border-radius: 8px; box-shadow: 0 2px 8px #0001; padding: 32px; }
+        h1 { text-align: center; color: #333; }
+        label { display: block; margin-bottom: 8px; font-weight: bold; }
+        textarea { width: 100%; min-height: 60px; margin-bottom: 12px; padding: 8px; border-radius: 4px; border: 1px solid #ccc; font-size: 1em; }
+        button { padding: 10px 20px; border: none; border-radius: 4px; background: #1976d2; color: #fff; font-size: 1em; cursor: pointer; }
+        button:disabled { background: #aaa; }
+        .embeddings-list { margin-top: 24px; }
+        .embedding-block { background: #f0f4f8; border-radius: 4px; padding: 12px; margin-bottom: 16px; }
+        .embedding-title { font-weight: bold; margin-bottom: 6px; }
+        .embedding-vector { font-family: monospace; font-size: 0.95em; word-break: break-all; }
+        .compare-section { margin-top: 32px; background: #e3f2fd; border-radius: 4px; padding: 16px; }
+        .similarity { font-size: 1.1em; font-weight: bold; color: #1976d2; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Démo Embeddings de Texte</h1>
+        <div style="margin-bottom:18px;">
+            <label for="provider-choice">Fournisseur d'embedding :</label>
+            <select id="provider-choice" style="padding:6px;border-radius:4px;border:1px solid #ccc;font-size:1em;">
+                <option value="openai">OpenAI</option>
+                <option value="lmstudio">LMStudio</option>
+            </select>
+        </div>
+        <div id="openai-config" style="margin-bottom:18px;">
+            <label for="openai-key">Clé API OpenAI :</label>
+            <input type="password" id="openai-key" placeholder="sk-..." style="width:70%;padding:6px;border-radius:4px;border:1px solid #ccc;font-size:1em;">
+            <button id="save-key-btn" style="margin-left:8px;">Enregistrer</button>
+            <span id="key-status" style="margin-left:10px;color:#388e3c;font-size:0.95em;"></span>
+        </div>
+        <div id="lmstudio-config" style="margin-bottom:18px;display:none;">
+            <label for="lmstudio-url">URL serveur LMStudio :</label>
+            <input type="text" id="lmstudio-url" placeholder="http://localhost:1234/v1/embeddings" style="width:70%;padding:6px;border-radius:4px;border:1px solid #ccc;font-size:1em;">
+            <button id="save-lmstudio-btn" style="margin-left:8px;">Enregistrer</button>
+            <span id="lmstudio-status" style="margin-left:10px;color:#388e3c;font-size:0.95em;"></span>
+        </div>
+        <label for="text-input">Saisissez un texte :</label>
+        <textarea id="text-input" placeholder="Entrez votre texte ici..."></textarea>
+        <button id="generate-btn">Générer l'embedding</button>
+        <div class="embeddings-list" id="embeddings-list"></div>
+        <div class="compare-section" id="compare-section" style="display:none;">
+            <div>Similarité cosinus entre les deux derniers textes :</div>
+            <div class="similarity" id="similarity-value"></div>
+        </div>
+        <div id="error-message" style="color:#d32f2f;margin-top:18px;"></div>
+    </div>
+    <script>
+
+        // --- Gestion fournisseur et paramètres ---
+        const providerChoice = document.getElementById('provider-choice');
+        const openaiConfig = document.getElementById('openai-config');
+        const lmstudioConfig = document.getElementById('lmstudio-config');
+        const keyInput = document.getElementById('openai-key');
+        const saveKeyBtn = document.getElementById('save-key-btn');
+        const keyStatus = document.getElementById('key-status');
+        const lmstudioUrlInput = document.getElementById('lmstudio-url');
+        const saveLmstudioBtn = document.getElementById('save-lmstudio-btn');
+        const lmstudioStatus = document.getElementById('lmstudio-status');
+        const errorMessage = document.getElementById('error-message');
+
+        function getProvider() {
+            return localStorage.getItem('embedding_provider') || 'openai';
+        }
+        function setProvider(provider) {
+            localStorage.setItem('embedding_provider', provider);
+        }
+        function getOpenAIKey() {
+            return localStorage.getItem('openai_api_key') || '';
+        }
+        function setOpenAIKey(key) {
+            localStorage.setItem('openai_api_key', key);
+        }
+        function getLmstudioUrl() {
+            return localStorage.getItem('lmstudio_url') || '';
+        }
+        function setLmstudioUrl(url) {
+            localStorage.setItem('lmstudio_url', url);
+        }
+        function showKeyStatus(msg, color='#388e3c') {
+            keyStatus.textContent = msg;
+            keyStatus.style.color = color;
+        }
+        function showLmstudioStatus(msg, color='#388e3c') {
+            lmstudioStatus.textContent = msg;
+            lmstudioStatus.style.color = color;
+        }
+
+        // Init à l'ouverture
+        providerChoice.value = getProvider();
+        keyInput.value = getOpenAIKey();
+        lmstudioUrlInput.value = getLmstudioUrl();
+        if (keyInput.value) showKeyStatus('Clé chargée');
+        if (lmstudioUrlInput.value) showLmstudioStatus('URL chargée');
+
+        function updateProviderUI() {
+            if (providerChoice.value === 'openai') {
+                openaiConfig.style.display = '';
+                lmstudioConfig.style.display = 'none';
+            } else {
+                openaiConfig.style.display = 'none';
+                lmstudioConfig.style.display = '';
+            }
+        }
+        providerChoice.onchange = function() {
+            setProvider(providerChoice.value);
+            updateProviderUI();
+        };
+        updateProviderUI();
+
+        saveKeyBtn.onclick = function() {
+            const key = keyInput.value.trim();
+            if (key.startsWith('sk-')) {
+                setOpenAIKey(key);
+                showKeyStatus('Clé enregistrée');
+            } else {
+                showKeyStatus('Clé invalide', '#d32f2f');
+            }
+        };
+        saveLmstudioBtn.onclick = function() {
+            const url = lmstudioUrlInput.value.trim();
+            if (url.startsWith('http')) {
+                setLmstudioUrl(url);
+                showLmstudioStatus('URL enregistrée');
+            } else {
+                showLmstudioStatus('URL invalide', '#d32f2f');
+            }
+        };
+
+        // --- Embeddings et UI ---
+        async function fetchEmbedding(text) {
+            const provider = getProvider();
+            if (provider === 'openai') {
+                const apiKey = getOpenAIKey();
+                if (!apiKey) throw new Error('Veuillez saisir votre clé API OpenAI.');
+                const response = await fetch('https://api.openai.com/v1/embeddings', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': 'Bearer ' + apiKey
+                    },
+                    body: JSON.stringify({
+                        input: text,
+                        model: 'text-embedding-ada-002'
+                    })
+                });
+                if (!response.ok) {
+                    let msg = 'Erreur API OpenAI (' + response.status + ')';
+                    try { const err = await response.json(); msg += ': ' + (err.error?.message || JSON.stringify(err)); } catch {}
+                    throw new Error(msg);
+                }
+                const data = await response.json();
+                return data.data[0].embedding;
+            } else if (provider === 'lmstudio') {
+                const url = getLmstudioUrl();
+                if (!url) throw new Error('Veuillez saisir l\'URL du serveur LMStudio.');
+                const response = await fetch(url, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        input: text,
+                        model: 'text-embedding-ada-002' // ou autre selon LMStudio
+                    })
+                });
+                if (!response.ok) {
+                    let msg = 'Erreur API LMStudio (' + response.status + ')';
+                    try { const err = await response.json(); msg += ': ' + (err.error?.message || JSON.stringify(err)); } catch {}
+                    throw new Error(msg);
+                }
+                const data = await response.json();
+                // Adapter selon le format de retour LMStudio
+                if (data.data && data.data[0] && data.data[0].embedding) {
+                    return data.data[0].embedding;
+                } else {
+                    throw new Error('Réponse inattendue de LMStudio');
+                }
+            } else {
+                throw new Error('Fournisseur non supporté.');
+            }
+        }
+
+        function cosineSimilarity(a, b) {
+            const dot = a.reduce((sum, v, i) => sum + v * b[i], 0);
+            const normA = Math.sqrt(a.reduce((sum, v) => sum + v * v, 0));
+            const normB = Math.sqrt(b.reduce((sum, v) => sum + v * v, 0));
+            return dot / (normA * normB);
+        }
+
+        const embeddings = [];
+        const embeddingsList = document.getElementById('embeddings-list');
+        const compareSection = document.getElementById('compare-section');
+        const similarityValue = document.getElementById('similarity-value');
+        const generateBtn = document.getElementById('generate-btn');
+
+        generateBtn.onclick = async function() {
+            const text = document.getElementById('text-input').value.trim();
+            errorMessage.textContent = '';
+            if (!text) return;
+            generateBtn.disabled = true;
+            generateBtn.textContent = 'Chargement...';
+            try {
+                const embedding = await fetchEmbedding(text);
+                embeddings.push({ text, embedding });
+                renderEmbeddings();
+                document.getElementById('text-input').value = '';
+            } catch (e) {
+                errorMessage.textContent = e.message;
+            } finally {
+                generateBtn.disabled = false;
+                generateBtn.textContent = "Générer l'embedding";
+            }
+        };
+
+        function renderEmbeddings() {
+            embeddingsList.innerHTML = '';
+            embeddings.forEach((item, idx) => {
+                const block = document.createElement('div');
+                block.className = 'embedding-block';
+                block.innerHTML = `<div class="embedding-title">Texte #${idx+1} :</div><div>${item.text}</div><div class="embedding-title">Embedding (longueur : <span style='color:#1976d2;'>${item.embedding.length}</span>) :</div><div class="embedding-vector">[${item.embedding.slice(0,8).map(x=>x.toFixed(4)).join(', ')}${item.embedding.length>8?', ...':''}]</div>`;
+                embeddingsList.appendChild(block);
+            });
+            if (embeddings.length >= 2) {
+                compareSection.style.display = '';
+                const a = embeddings[embeddings.length-2].embedding;
+                const b = embeddings[embeddings.length-1].embedding;
+                const sim = cosineSimilarity(a, b);
+                similarityValue.textContent = sim.toFixed(4);
+            } else {
+                compareSection.style.display = 'none';
+            }
+        }
+    </script>
+</body>
+</html>
