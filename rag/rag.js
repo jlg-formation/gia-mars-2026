@@ -7,12 +7,20 @@ let documents = [];
 let chunks = [];
 let embeddings = [];
 let chunkSize = 200;
+let embeddingModel = 'text-embedding-3-small';
+let chatModel = 'gpt-4-1-mini';
 
 // UI Elements
 const keySection = document.getElementById('openai-key-section');
 const keyInput = document.getElementById('openai-key');
 const validateKeyBtn = document.getElementById('validate-key');
 const keyStatus = document.getElementById('key-status');
+
+// Ajout bouton reset
+const resetBtn = document.createElement('button');
+resetBtn.textContent = 'Réinitialiser le pipeline';
+resetBtn.className = 'bg-red-500 text-white px-4 py-2 rounded mt-2';
+keySection.appendChild(resetBtn);
 
 const documentSection = document.getElementById('document-section');
 const documentInput = document.getElementById('document-input');
@@ -86,6 +94,12 @@ function updateDocumentsList() {
     div.textContent = doc.type === 'file' ? `Fichier: ${doc.name}` : `Texte: ${doc.content.substring(0, 40)}...`;
     documentsList.appendChild(div);
   });
+    if (documents.length > 0) {
+      const info = document.createElement('div');
+      info.className = 'text-xs text-gray-500 mt-2';
+      info.innerHTML = `<strong>Documents chargés:</strong> ${documents.length}`;
+      documentsList.appendChild(info);
+    }
 }
 
 // Etape 3: Chunking
@@ -109,6 +123,12 @@ applyChunkingBtn.addEventListener('click', () => {
     div.textContent = `Chunk ${idx + 1} (${chunk.source}): ${chunk.text.substring(0, 40)}...`;
     chunksVisualization.appendChild(div);
   });
+    if (chunks.length > 0) {
+      const info = document.createElement('div');
+      info.className = 'text-xs text-gray-500 mt-2';
+      info.innerHTML = `<strong>Chunks générés:</strong> ${chunks.length} (taille: ${chunkSize} caractères)`;
+      chunksVisualization.appendChild(info);
+    }
   embeddingSection.classList.remove('hidden');
 });
 
@@ -127,15 +147,21 @@ runEmbeddingBtn.addEventListener('click', async () => {
       });
       const div = document.createElement('div');
       div.className = 'border rounded p-2 mb-2 bg-yellow-50';
-      div.textContent = `Embedding ${embeddings.length} (${chunk.source}): [${vector.slice(0, 5).join(', ')}...]`;
+        div.innerHTML = `Embedding ${embeddings.length} (${chunk.source})<br><span class='text-xs text-gray-500'>Modèle: ${embeddingModel}, Dimensions: ${vector.length}</span><br>[${vector.slice(0, 5).join(', ')}...]`;
       embeddingsVisualization.appendChild(div);
     } catch (e) {
       const div = document.createElement('div');
       div.className = 'border rounded p-2 mb-2 bg-red-100';
-      div.textContent = `Erreur embedding chunk ${chunk.idx + 1}: ${e.message}`;
+        div.innerHTML = `<span class='text-red-500'>Erreur embedding chunk ${chunk.idx + 1}: ${e.message}</span><br><span class='text-xs'>Vérifiez votre clé OpenAI ou quota.</span>`;
       embeddingsVisualization.appendChild(div);
     }
   }
+    if (embeddings.length > 0) {
+      const info = document.createElement('div');
+      info.className = 'text-xs text-gray-500 mt-2';
+      info.innerHTML = `<strong>Embeddings générés:</strong> ${embeddings.length} (modèle: ${embeddingModel})`;
+      embeddingsVisualization.appendChild(info);
+    }
   questionSection.classList.remove('hidden');
 });
 
@@ -152,7 +178,7 @@ async function getOpenAIEmbedding(text, apiKey) {
       'Authorization': `Bearer ${apiKey}`
     },
     body: JSON.stringify({
-      model: 'text-embedding-3-small',
+        model: embeddingModel,
       input: text
     })
   });
@@ -185,18 +211,28 @@ generatePromptBtn.addEventListener('click', () => {
     });
     // Tri par score décroissant
     const sorted = embeddings.slice().sort((a, b) => b.score - a.score);
-    const relevantChunks = sorted.slice(0, 3);
-    const sources = relevantChunks.map(c => c.source);
-    const promptTemplate = `Répondez à la question en utilisant les informations suivantes :\n\n{context}\n\nQuestion : {question}`;
-    const context = relevantChunks.map(c => c.text).join('\n---\n');
-    const promptFinal = promptTemplate.replace('{context}', context).replace('{question}', question);
-    promptTemplateDiv.innerHTML = `<strong>Prompt template :</strong><br><pre>${promptTemplate}</pre>`;
-    promptFinalDiv.innerHTML = `<strong>Prompt final envoyé au LLM :</strong><br><pre>${promptFinal}</pre>`;
-    responseSection.classList.remove('hidden');
-    // Affichage des scores de pertinence
-    sourcesListDiv.innerHTML = `<strong>Sources utilisées (pertinence) :</strong> <ul>${relevantChunks.map(c => `<li>${c.source} <span class='text-xs text-gray-500'>(score: ${c.score.toFixed(3)})</span></li>`).join('')}</ul>`;
-    // Appel LLM réel
-    callOpenAIChat(promptFinal, sources);
+      // Option: voir tous les chunks pertinents
+      const showAllBtn = document.createElement('button');
+      showAllBtn.textContent = 'Voir tous les chunks triés';
+      showAllBtn.className = 'bg-gray-300 text-black px-2 py-1 rounded text-xs mb-2';
+      promptTemplateDiv.innerHTML = '';
+      promptTemplateDiv.appendChild(showAllBtn);
+      const relevantChunks = sorted.slice(0, 3);
+      const sources = relevantChunks.map(c => c.source);
+      const promptTemplate = `Répondez à la question en utilisant les informations suivantes :\n\n{context}\n\nQuestion : {question}`;
+      const context = relevantChunks.map(c => c.text).join('\n---\n');
+      const promptFinal = promptTemplate.replace('{context}', context).replace('{question}', question);
+      promptTemplateDiv.innerHTML += `<strong>Prompt template :</strong><br><pre>${promptTemplate}</pre>`;
+      promptFinalDiv.innerHTML = `<strong>Prompt final envoyé au LLM :</strong><br><pre>${promptFinal}</pre><div class='text-xs text-gray-500 mt-2'>Modèle: ${chatModel}</div>`;
+      responseSection.classList.remove('hidden');
+      // Affichage des scores de pertinence
+      sourcesListDiv.innerHTML = `<strong>Sources utilisées (pertinence) :</strong> <ul>${relevantChunks.map(c => `<li>${c.source} <span class='text-xs text-gray-500'>(score: ${c.score.toFixed(3)})</span></li>`).join('')}</ul>`;
+      // Appel LLM réel
+      callOpenAIChat(promptFinal, sources);
+      // Affichage tous les chunks triés
+      showAllBtn.addEventListener('click', () => {
+        promptTemplateDiv.innerHTML += `<div class='mt-2'><strong>Chunks triés par pertinence :</strong><ul>${sorted.map(c => `<li>${c.source} <span class='text-xs'>(score: ${c.score.toFixed(3)})</span></li>`).join('')}</ul></div>`;
+      });
   });
 });
 
@@ -214,7 +250,7 @@ async function callOpenAIChat(prompt, sources) {
         'Authorization': `Bearer ${openAIKey}`
       },
       body: JSON.stringify({
-        model: 'gpt-4-1-mini',
+          model: chatModel,
         messages: [
           { role: 'system', content: 'Tu es un assistant pédagogique, cite toujours tes sources.' },
           { role: 'user', content: prompt }
@@ -225,11 +261,33 @@ async function callOpenAIChat(prompt, sources) {
     if (data && data.choices && data.choices[0] && data.choices[0].message) {
       llmResponseDiv.innerHTML = `<em>Réponse générée :</em><br>${data.choices[0].message.content}`;
     } else {
-      llmResponseDiv.innerHTML = '<span class="text-red-500">Erreur lors de la génération de la réponse.</span>';
+        llmResponseDiv.innerHTML = `<span class="text-red-500">Erreur lors de la génération de la réponse.</span><br><span class='text-xs text-gray-500'>Prompt envoyé:<br><pre>${prompt}</pre></span>`;
     }
   } catch (e) {
-    llmResponseDiv.innerHTML = `<span class="text-red-500">Erreur LLM : ${e.message}</span>`;
+      llmResponseDiv.innerHTML = `<span class="text-red-500">Erreur LLM : ${e.message}</span><br><span class='text-xs text-gray-500'>Prompt envoyé:<br><pre>${prompt}</pre></span><br><span class='text-xs'>Vérifiez votre clé OpenAI, quota, ou modèle.</span>`;
   }
   sourcesListDiv.innerHTML = `<strong>Sources utilisées :</strong> <ul>${sources.map(s => `<li>${s}</li>`).join('')}</ul>`;
 }
+resetBtn.addEventListener('click', () => {
+  openAIKey = '';
+  keyInput.value = '';
+  keyStatus.textContent = '';
+  documents = [];
+  chunks = [];
+  embeddings = [];
+  chunkSize = 200;
+  documentSection.classList.add('hidden');
+  chunkingSection.classList.add('hidden');
+  embeddingSection.classList.add('hidden');
+  questionSection.classList.add('hidden');
+  responseSection.classList.add('hidden');
+  documentsList.innerHTML = '';
+  chunksVisualization.innerHTML = '';
+  embeddingsVisualization.innerHTML = '';
+  userQuestionInput.value = '';
+  promptTemplateDiv.innerHTML = '';
+  promptFinalDiv.innerHTML = '';
+  llmResponseDiv.innerHTML = '';
+  sourcesListDiv.innerHTML = '';
+});
 

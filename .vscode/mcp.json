@@ -1,0 +1,9 @@
+{
+	"servers": {
+		"jlg-consulting": {
+			"url": "https://jlg-consulting.com/mcp.php",
+			"type": "http"
+		}
+	},
+	"inputs": []
+}
