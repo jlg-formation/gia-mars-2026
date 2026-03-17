@@ -232,4 +232,4 @@ async function callOpenAIChat(prompt, sources) {
   }
   sourcesListDiv.innerHTML = `<strong>Sources utilisées :</strong> <ul>${sources.map(s => `<li>${s}</li>`).join('')}</ul>`;
 }
-}
+
