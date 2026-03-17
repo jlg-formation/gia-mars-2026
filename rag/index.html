@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Démonstrateur RAG Formation</title>
+  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+</head>
+<body class="bg-gray-100 min-h-screen flex flex-col items-center">
+  <header class="w-full bg-blue-600 text-white py-4 mb-6">
+    <h1 class="text-2xl font-bold text-center">Démonstrateur RAG en formation</h1>
+    <p class="text-center text-sm">Pipeline RAG interactif et pédagogique</p>
+  </header>
+  <main class="w-full max-w-2xl bg-white rounded shadow p-6">
+    <!-- Etape 1: Saisie de la clé OpenAI -->
+    <section id="openai-key-section" class="mb-6">
+      <label for="openai-key" class="block font-semibold mb-2">Clé OpenAI :</label>
+      <input type="password" id="openai-key" class="w-full border rounded px-3 py-2 mb-2" placeholder="Entrez votre clé OpenAI">
+      <button id="validate-key" class="bg-blue-500 text-white px-4 py-2 rounded">Valider</button>
+      <p id="key-status" class="text-sm mt-2 text-gray-600"></p>
+    </section>
+    <!-- Etape 2: Ajout de documents -->
+    <section id="document-section" class="mb-6 hidden">
+      <label class="block font-semibold mb-2">Ajout de documents :</label>
+      <textarea id="document-input" class="w-full border rounded px-3 py-2 mb-2" rows="4" placeholder="Collez votre texte ou markdown ici..."></textarea>
+      <input type="file" id="file-upload" class="mb-2">
+      <button id="add-document" class="bg-green-500 text-white px-4 py-2 rounded">Ajouter</button>
+      <div id="documents-list" class="mt-4"></div>
+    </section>
+    <!-- Etape 3: Paramètres de chunking -->
+    <section id="chunking-section" class="mb-6 hidden">
+      <label class="block font-semibold mb-2">Paramètres de chunking :</label>
+      <input type="number" id="chunk-size" class="border rounded px-3 py-2 mb-2" min="50" max="1000" value="200">
+      <button id="apply-chunking" class="bg-purple-500 text-white px-4 py-2 rounded">Appliquer le chunking</button>
+      <div id="chunks-visualization" class="mt-4"></div>
+    </section>
+    <!-- Etape 4: Embedding -->
+    <section id="embedding-section" class="mb-6 hidden">
+      <button id="run-embedding" class="bg-yellow-500 text-white px-4 py-2 rounded">Lancer l'embedding</button>
+      <div id="embeddings-visualization" class="mt-4"></div>
+    </section>
+    <!-- Etape 5: Question et génération de prompt -->
+    <section id="question-section" class="mb-6 hidden">
+      <label class="block font-semibold mb-2">Posez votre question :</label>
+      <input type="text" id="user-question" class="w-full border rounded px-3 py-2 mb-2" placeholder="Votre question...">
+      <button id="generate-prompt" class="bg-blue-400 text-white px-4 py-2 rounded">Générer le prompt</button>
+      <div id="prompt-template" class="mt-4"></div>
+      <div id="prompt-final" class="mt-4"></div>
+    </section>
+    <!-- Etape 6: Réponse du LLM -->
+    <section id="response-section" class="mb-6 hidden">
+      <h2 class="font-semibold mb-2">Réponse du LLM :</h2>
+      <div id="llm-response" class="bg-gray-50 border rounded p-4"></div>
+      <div id="sources-list" class="mt-4"></div>
+    </section>
+  </main>
+  <footer class="w-full text-center text-xs text-gray-500 mt-8 mb-2">© Formation RAG 2026</footer>
+  <script src="rag.js"></script>
+</body>
+</html>
