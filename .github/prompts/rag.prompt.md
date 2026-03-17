@@ -32,6 +32,10 @@ Nous sommes dans un contexte de formation, où l’objectif est de rendre les co
 - L’utilisateur doit pouvoir configurer le chunking (découpage des documents).
 - Les prompts envoyés au LLM doivent être affichés.
 - Les réponses doivent citer les sources utilisées.
+- Les appels au LLM ne doivent pas être simulés, mais réels (via l’API OpenAI), en utilisant la clé fournie par l’utilisateur.
+- Les appels au moteur d'embedding doivent également être réels, en utilisant la même clé OpenAI.
+- Si les fichiers de sortie existe deja, c'est que tu dois travailler en mode modification minimum, en ajoutant les fonctionnalités manquantes ou contraintes non satisfaites pour compléter le démonstrateur.
+- les modeles de chat doivent etre des modeles pas cher gpt4.1 ou gpt5.1 mini, et les modeles d'embeddings doivent etre des modeles pas cher aussi (ex: text-embedding-3-small)
 
 ## Format d'entrée et de sortie
 **Entrée** :
