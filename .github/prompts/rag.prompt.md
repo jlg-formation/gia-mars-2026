@@ -37,6 +37,10 @@ Nous sommes dans un contexte de formation, où l’objectif est de rendre les co
 - Les appels au moteur d'embedding doivent également être réels, en utilisant la même clé OpenAI.
 - Si les fichiers de sortie existent déjà, travailler en mode modification minimum, en ajoutant les fonctionnalités manquantes ou contraintes non satisfaites pour compléter le démonstrateur.
 - Les modèles de chat doivent être des modèles économiques (gpt4.1 ou gpt5.1 mini), et les modèles d'embeddings doivent être économiques (ex : text-embedding-3-small).
+- Ne cree pas de workspace ou de projet Vite, mais ajoute les fichiers nécessaires dans le répertoire `/rag-vite` pour compléter le démonstrateur.
+- Installer vite via `npm create vite@latest rag-vite -- --template react-ts`.
+- Installe tailwindcss via Vite comme indiqué dans le skill. (/.github/skills/tailwindcss-vite.md)
+- Installe un gitignore adapté pour une application React + TypeScript + Tailwind CSS, en excluant les fichiers de configuration, les fichiers de code source, et les fichiers de style, mais en incluant les fichiers de build et les dépendances.
 
 ## Format d'entrée et de sortie
 **Entrée** :
@@ -50,10 +54,10 @@ Nous sommes dans un contexte de formation, où l’objectif est de rendre les co
 - Réponse du LLM avec citation des sources.
 - Visualisation des chunks, embeddings et étapes intermédiaires.
 
-Les livrables informatiques sont livrés dans le répertoire `/rag` :
-- Application React dans `/rag` (structure Vite standard).
+Les livrables informatiques sont livrés dans le répertoire `/rag-vite` :
+- Application React dans `/rag-vite` (structure Vite standard).
 - Les composants TypeScript pour gérer les fonctionnalités du RAG (ajout de documents, chunking, embeddings, génération de prompts, affichage des réponses).
-
+- Un fichier `.gitignore` adapté pour une application React + TypeScript + Tailwind CSS.
 ## Exemples
 - L’utilisateur ajoute un fichier markdown, configure le chunking (ex : 200 tokens), lance l’embedding, pose une question, voit le prompt généré et la réponse avec les sources citées.
 - Un stagiaire modifie les paramètres de chunking et observe l’impact sur la récupération des sources.
