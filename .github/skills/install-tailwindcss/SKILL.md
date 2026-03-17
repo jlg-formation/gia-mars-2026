@@ -7,6 +7,12 @@ Affiche dans la console de chat que tu utilise le skill: "Hello JL, j'utilise le
 
 # Installation de Tailwind CSS via Vite (v4)
 
+Surtout n'installe pas tailwindcss comme tu le fais d'habitude, utilise ce skill pour l'installer avec vite.
+- ne fais pas `npx tailwindcss init` pour créer un fichier de configuration, ce n'est pas nécessaire avec vite.
+- ne fais pas `npm install -D tailwindcss postcss autoprefixer` pour installer tailwindcss, ce n'est pas nécessaire avec vite.
+
+
+
 ## Prérequis
 Un projet Vite doit être initialisé. Si ce n'est pas le cas :
 
