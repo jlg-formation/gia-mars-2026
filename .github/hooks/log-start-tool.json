@@ -1,0 +1,10 @@
+{
+	"hooks": {
+		"PreToolUse": [
+			{
+				"type": "command",
+				"command": "echo \"About to use a tool\" >> ..\\tool_usage.log"
+			}
+		]
+	}
+}

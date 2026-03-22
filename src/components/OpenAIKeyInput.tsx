@@ -16,13 +16,14 @@ export default function OpenAIKeyInput({ onKeySubmit }: Props) {
         onChange={e => setKey(e.target.value)}
         placeholder="Entrez votre clé OpenAI..."
       />
-      <button
-        className="mt-2 px-4 py-1 bg-accent text-white rounded hover:bg-accent/80"
-        onClick={() => key && onKeySubmit(key)}
-        disabled={!key}
-      >
-        Valider
-      </button>
+        <button
+          style={{ background: "var(--accent)" }}
+          className="mt-2 px-4 py-1 text-white rounded"
+          onClick={() => key && onKeySubmit(key)}
+          disabled={!key}
+        >
+          Valider
+        </button>
     </div>
   );
 }
